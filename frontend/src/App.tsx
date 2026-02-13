@@ -1,6 +1,11 @@
+import { useState } from "react"
 import "./App.css"
+import { Form } from "./components/Form"
+import type { IUser } from "./types"
+import { User } from "./components/User"
 
 export default function App() {
+    const [users, setUsers] = useState<IUser[]>([])
     return (
         <div className="app">
             <header className="header">
@@ -8,32 +13,7 @@ export default function App() {
             </header>
 
             <main className="main">
-                <section className="form-section">
-                    <h2>Add New User</h2>
-                    <form className="user-form">
-                        <div className="form-group">
-                            <label htmlFor="name">Name:</label>
-                            <input
-                                type="text"
-                                id="name"
-                                placeholder="John Doe"
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="email">Email:</label>
-                            <input
-                                type="email"
-                                id="email"
-                                placeholder="john@example.com"
-                            />
-                        </div>
-
-                        <button type="submit" className="btn btn-primary">
-                            Create User
-                        </button>
-                    </form>
-                </section>
+                <Form />
 
                 <section className="users-section">
                     <div className="section-header">
@@ -41,7 +21,9 @@ export default function App() {
                         <button className="btn btn-secondary">Refresh</button>
                     </div>
 
-                    <div className="users-list"></div>
+                    <div className="users-list">
+                        {users.map((el) => <User {...el}/>)}
+                    </div>
                 </section>
             </main>
         </div>
