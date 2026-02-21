@@ -1,11 +1,72 @@
-import { useState } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import "./App.css"
-import { Form } from "./components/Form"
+import { Form, type IFromData } from "./components/Form"
 import type { IUser } from "./types"
 import { User } from "./components/User"
+import { apiClient, ApiError } from "./api/client"
 
 export default function App() {
+    const [formData, setFormData] = useState<IFromData>({
+        name: "",
+        email: ""
+    })
     const [users, setUsers] = useState<IUser[]>([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<null | string>(null)
+
+    const fetchUsers = async () => {
+        setIsLoading(true)
+
+        try {
+            const response = await apiClient.getUsers()
+
+            if (response.success && response.data){
+                setUsers(response.data)
+            } else {
+                setError(response.error || "Failed to fetch users")
+            }
+        } catch (error) {
+            if(error instanceof ApiError) {
+                setError(`Error ${error.status}: ${error.message}`)
+            } else {
+                setError("Xz error")
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchUsers()
+    }, [])
+
+    const handleSubmit = async (e:FormEvent) => {
+        e.preventDefault()
+        setError(null)
+        
+        if (!formData.name.trim() || !formData.email.trim()){
+            setError("Name and email are required")
+            return 
+        }
+        try{
+            const response = await apiClient.createUser(formData)
+
+            if (response.success && response.data) {
+                await fetchUsers()
+                setFormData({name: "", email: ""})
+            } else {
+                setError(response.error || "Failed to create user")
+            }
+            await fetchUsers()
+        } catch (error) {
+            if (error instanceof ApiError){
+                setError(`Error: ${error.status}: ${error.message}`)
+            } else {
+                setError("Xz 2 error")
+            }
+        }
+    }
+
     return (
         <div className="app">
             <header className="header">
@@ -13,17 +74,27 @@ export default function App() {
             </header>
 
             <main className="main">
-                <Form />
+                {error && <div className="error-banner">
+                    {error}
+                    <button className="error-close" onClick={() => setError(null)}>x</button>
+                </div>}
+
+                <Form handleSubmit={handleSubmit}formData={formData} setFormData={setFormData} />
 
                 <section className="users-section">
                     <div className="section-header">
                         <h2>Users</h2>
-                        <button className="btn btn-secondary">Refresh</button>
+                        <button onClick={() => fetchUsers()} className="btn btn-secondary">Refresh</button>
                     </div>
 
-                    <div className="users-list">
-                        {users.map((el) => <User {...el}/>)}
-                    </div>
+                    {isLoading && users.length === 0 ?
+                    (
+                        <div className="loading">Loading users...</div>
+
+                    ) :
+                    (<div className="users-list">
+                        {users.map((el, i) => <User key={i} {...el}/>)}
+                    </div>)}
                 </section>
             </main>
         </div>

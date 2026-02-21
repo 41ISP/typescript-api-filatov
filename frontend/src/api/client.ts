@@ -1,4 +1,5 @@
-import {type IApiResponse, type IUser } from "../types"
+import { data } from "react-router"
+import {type IApiResponse, type ICreateUserRequest, type IUser } from "../types"
 
 export class ApiError extends Error {
     status: number
@@ -73,8 +74,26 @@ class ApiClient {
             })
     }
 
-    async getUsers() {
-        return this.get<IApiResponse<IUser[]>>("/users")
+    async post<TRequest, TResponse>(
+        endpoint: string,
+        data: TRequest
+    ): Promise<TResponse>{
+        return this.request<TResponse>(endpoint,
+            {
+                method: "POST",
+                body: JSON.stringify(data)
+            }
+        )
+    }
+
+    async getUsers(): Promise<IApiResponse<IUser[]>> {
+        return this.get("/users")
+    }
+
+    async createUser (data: ICreateUserRequest):
+    Promise<IApiResponse<IUser>>{
+        return this.post<ICreateUserRequest,
+            IApiResponse<IUser>>(`/users`, data)
     }
 }
 
